@@ -170,8 +170,12 @@ def filter_out_rows(df):
         offer_df: DataFrame object containing the filtered combined offer data
         
     """
-    df['min_time_viewed'] = df.groupby(['person', 'offer_id', 'time'])['time_viewed'].transform('min')
-    df['min_time_completed'] = df.groupby(['person', 'offer_id', 'time'])['time_completed'].transform('min')
+    df['min_time_viewed'] = df.groupby(['person',
+                                        'offer_id',
+                                        'time'])['time_viewed'].transform('min')
+    df['min_time_completed'] = df.groupby(['person',
+                                           'offer_id',
+                                           'time'])['time_completed'].transform('min')
     
     condition1 = (df['min_time_viewed'] == df['time_viewed'])
     condition2 = (df['min_time_viewed'].isnull() == True)
@@ -203,7 +207,9 @@ def process_offer_df(df):
         df: DataFrame object containing the processed offer data
         
     """
-    
+    inf_ids = ['3f207df678b143eea3cee63160fa8bed', 
+               '5a8bc65990b245e5a138643cd4eb9837']
+
     # adjust the time viewed and completed
     df['time_viewed'] = np.where((df['time_viewed'] <= df['time_ended']),
                                  df['time_viewed'], np.nan)
@@ -221,15 +227,16 @@ def process_offer_df(df):
                                   (df['time_completed'] > df['time_ended']),0,1)
     
     # adjust informative offers - they are completed on viewing
-    df['event_completed'] = np.where((df['offer_id'].isin(['3f207df678b143eea3cee63160fa8bed', 
-                                                           '5a8bc65990b245e5a138643cd4eb9837'])) &
-                                      (df['event_viewed'] == 1), 1, df['event_completed'])
+    df['event_completed'] = np.where((df['offer_id'].isin(inf_ids)) &
+                                    (df['event_viewed'] == 1), 1, df['event_completed'])
 
-    df['time_completed'] = np.where((df['offer_id'].isin(['3f207df678b143eea3cee63160fa8bed', 
-                                                       '5a8bc65990b245e5a138643cd4eb9837'])) &
-                                      (df['event_viewed'] == 1), df['time_ended'], df['time_completed'])
+    df['time_completed'] = np.where((df['offer_id'].isin(inf_ids)) &
+                                      (df['event_viewed'] == 1), 
+                                      df['time_ended'], 
+                                      df['time_completed'])
     
-    df['time_processed'] = np.where(df['time_completed'].isnull() == False, df['time_completed'], df['time_ended'])
+    df['time_processed'] = np.where(df['time_completed'].isnull() == False, 
+                                    df['time_completed'], df['time_ended'])
     df = df.sort_values(by=['person', 'time']).reset_index(drop=True)
     return df
 
@@ -242,7 +249,9 @@ def get_transaction_df(t_df):
         t_df: DataFrame object containing the transcript data
         
     """
-    return t_df[t_df['event'] == 'transaction'][['person', 'time', 'amount']].reset_index(drop=True)
+    return t_df[t_df['event'] == 'transaction'][['person', 
+                                                 'time', 
+                                                 'amount']].reset_index(drop=True)
 
 
 def get_ranges(offer_df, customer):
@@ -254,12 +263,14 @@ def get_ranges(offer_df, customer):
         customer: a customer's id
         
     OUTPUT:
-        ranges: a list of timeranges when an offer was active (at least viewed till end/completion)
+        ranges: a list of timeranges when an offer was active (at least 
+        viewed till end/completion)
         
     """
     # get combinations of time viewed and processed (max of completed and ended)
     ranges = offer_df[(offer_df['person'] == customer) &
-                       (offer_df['event_viewed'] == 1)][['time_viewed', 'time_processed']].values.astype(np.int64)
+                       (offer_df['event_viewed'] == 1)][['time_viewed', 
+                                                         'time_processed']].values.astype(np.int64)
     
     # put them into list of tuples
     ranges = list(map(tuple, ranges))
@@ -270,19 +281,21 @@ def check_overlaps(range_list):
     for a list of timeranges when an offer was running, check for overlapping offers
     
     INPUT:
-        range_list: a list of timeranges when an offer was active (at least viewed till end/completion)
+        range_list: a list of timeranges when an offer was active (at least 
+        viewed till end/completion)
         
     OUTPUT:
         overlaps: a list of timeranges when at least two offers were active
         
     """
     overlaps = []
-    # for each two-element combination, check if the timeranges overlapped for at least one day
+    # for each two-element combination, check if the timeranges overlapped 
+    # for at least one day
     # if yes, add both timeranges to the overlap list
     for subset in combinations(range_list, 2):
-#         potential = range(max(subset[0][0], subset[1][0]), min(subset[0][-1], subset[1][-1]))
-        potential = max(subset[0][0], subset[1][0]) - min(subset[0][-1], subset[1][-1])
-#         if len(potential) >= 0:
+        potential = max(subset[0][0], 
+                        subset[1][0]) - min(subset[0][-1], 
+                                            subset[1][-1])
         if potential <= 0:
             overlaps.append(subset[0])
             overlaps.append(subset[1])
@@ -290,13 +303,16 @@ def check_overlaps(range_list):
     
 def union_ranges(range_list):
     """
-    a helper function to union overlapping or consecutive timeranges when an offer was running
+    a helper function to union overlapping or consecutive timeranges when 
+    an offer was running
     
     INPUT:
-        range_list: a list of timeranges when an offer was active (at least viewed till end/completion)
+        range_list: a list of timeranges when an offer was active (at least 
+        viewed till end/completion)
         
     OUTPUT:
-        ranges_union: a list of timeranges with two (or more) offers running in parallel or consecutively unioned
+        ranges_union: a list of timeranges with two (or more) offers running 
+        in parallel or consecutively unioned
         
     """
     # get the union of ranges to determine the actual gaps
@@ -313,8 +329,10 @@ def range_gaps(a, b, r):
     define timeranges with no offer running
     
     INPUT:
-        a: parameter used for chaining ranges - should be the minimum timestamp of the dataset
-        b: parameter used for chaining ranges - should be the maximum timestamp of the dataset
+        a: parameter used for chaining ranges - should be the minimum 
+        timestamp of the dataset
+        b: parameter used for chaining ranges - should be the maximum 
+        timestamp of the dataset
         r: list of unioned timeranges when at least one offer was running
         
     OUTPUT:
@@ -375,7 +393,8 @@ def combine_transactional_data(offer_df, transactional_df):
         transactional_df: the DataFrame object with transactional data
         
     OUTPUT:
-        data_dictionary: a dictionary of dictionaries that contains data required for the final dataframe
+        data_dictionary: a dictionary of dictionaries that contains data 
+        required for the final dataframe
     """
     
     # defining an empty dictionary and an index to be incremented for each row
@@ -418,10 +437,12 @@ def get_dataset(offer_df, transactional_df, df_po, df_pr, filename, save=False):
         offer_df: DataFrame object with processed offer data
         transactional_df: DataFrame object with transactional data
         filename: a file name chosen for the file in case of a save
-        save: when save, overwrites and/or saves the dataframe to the file with a given name
+        save: when save, overwrites and/or saves the dataframe to the 
+        file with a given name
         
     OUTPUT:
-        data_dictionary: a dictionary of dictionaries that contains data required for the final dataframe
+        data_dictionary: a dictionary of dictionaries that contains data 
+        required for the final dataframe
     """
     data_dict_final = combine_transactional_data(offer_df, transactional_df)
     data_df = pd.DataFrame.from_dict(data_dict_final, orient='index')
@@ -469,7 +490,8 @@ def process_final_df(df_f, df_po, df_pr):
     df_f = df_f.groupby(['person', 'offer_id']).sum().reset_index()
     df_f = df_f.merge(df_po, how='left', left_on='offer_id', right_on='id')
     df_f = df_f.drop(['channels', 'duration', 'offer_type', 'id'], axis=1)
-    df_f[['channels_int', 'offer_type_int']] = df_f[['channels_int', 'offer_type_int']].fillna(999)
+    df_f[['channels_int', 'offer_type_int']] = df_f[['channels_int', 
+                                                     'offer_type_int']].fillna(999)
     df_f = df_f.fillna(0)
     df_f = df_f[df_f['person'].isin(df_pr['id'].unique())].reset_index(drop=True)
     df_f = df_f.merge(df_pr, how='left', left_on='person', right_on = 'id')

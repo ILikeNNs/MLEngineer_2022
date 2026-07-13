@@ -5,7 +5,7 @@ import joblib
 import os
 import pandas as pd
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import root_mean_squared_error
 
 
 if __name__ == '__main__':
@@ -42,7 +42,7 @@ if __name__ == '__main__':
     clf = RandomForestRegressor(n_estimators=args.n_estimators, min_samples_leaf=args.min_samples_leaf, n_jobs=-1)
     clf.fit(train_X, train_y)
     ypred = clf.predict(valid_X)
-    print('rootmse:', mean_squared_error(valid_y, ypred, squared=False))
+    print('rootmse:', root_mean_squared_error(valid_y, ypred, squared=False))
     # Print the coefficients of the trained classifier, and save the coefficients
     joblib.dump(clf, os.path.join(args.model_dir, "model.joblib"))
 
