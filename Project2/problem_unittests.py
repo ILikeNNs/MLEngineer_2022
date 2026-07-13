@@ -10,7 +10,8 @@ TEST_CSV = 'data/test_info.csv'
 class AssertTest(object):
     '''Defines general test behavior.'''
     def __init__(self, params):
-        self.assert_param_message = '\n'.join([str(k) + ': ' + str(v) + '' for k, v in params.items()])
+        self.assert_param_message = '\n'.join([str(k) + 
+                        ': ' + str(v) + '' for k, v in params.items()])
     
     def test(self, assert_condition, assert_message):
         assert assert_condition, assert_message + '\n\nUnit Test Function Parameters\n' + self.assert_param_message
@@ -25,7 +26,8 @@ def test_numerical_df(numerical_dataframe):
     transformed_df = numerical_dataframe(TEST_CSV)
                                 
     # Check type is a DataFrame
-    assert isinstance(transformed_df, pd.DataFrame), 'Returned type is {}.'.format(type(transformed_df))
+    assert isinstance(transformed_df, pd.DataFrame), 
+    'Returned type is {}.'.format(type(transformed_df))
     
     # check columns
     column_names = list(transformed_df)
@@ -101,7 +103,8 @@ def test_lcs(df, lcs_word):
     assert test_val<=1.0, 'It appears that the value is not normalized; expected a value <=1, got: '+str(test_val)
     
     # known vals for first few files
-    lcs_vals = [0.1917808219178082, 0.8207547169811321, 0.8464912280701754, 0.3160621761658031, 0.24257425742574257]
+    lcs_vals = [0.1917808219178082, 0.8207547169811321, 
+                0.8464912280701754, 0.3160621761658031, 0.24257425742574257]
     
     # results for comparison
     results = []
